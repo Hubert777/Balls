@@ -4,22 +4,16 @@ using UnityEngine;
 
 public class Attractor : MonoBehaviour
 {
-
-    //const float G = 667.4f;
-    const float G = 1f;
+    const float G = 0.5f;
 
     public static List<Attractor> Attractors;
-
-    public float gravityField;
-    
     public Rigidbody rb;
-    
 
     void FixedUpdate()
     {
         foreach (Attractor attractor in Attractors)
         {
-            if (attractor.gameObject.GetComponent<Rigidbody>().mass >= 50)
+            if (attractor.gameObject.GetComponent<Rigidbody>().mass >= 50 && PlayerPrefs.GetInt("Permission") == 1)
             {
                 attractor.gameObject.tag = "Boom";
             }
@@ -50,12 +44,20 @@ public class Attractor : MonoBehaviour
 
         if (distance == 0f)
             return;
-        else if (distance<gravityField)
+        else if (distance<=rb.mass)
         {
             float forceMagnitude = G * (rb.mass * rbToAttract.mass) / Mathf.Pow(distance, 2);
             Vector3 force = direction.normalized * forceMagnitude;
 
+            if (PlayerPrefs.GetInt("Permission") == 0)
+            {
+                force = -direction.normalized * forceMagnitude;
+            }
             rbToAttract.AddForce(force);
+        }
+        else if (distance > rb.mass)
+        {
+            rbToAttract.velocity *= 0.9999999f;
         }
     }
 
@@ -74,7 +76,6 @@ public class Attractor : MonoBehaviour
                 }
 
                 rb.mass += collision.rigidbody.mass;
-                gravityField += collision.rigidbody.mass;
 
                 this.gameObject.transform.localScale = new Vector3(thisScale + colliderScale, thisScale + colliderScale, thisScale + colliderScale);
 

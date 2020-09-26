@@ -1,16 +1,19 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class BallController : MonoBehaviour {
     
     public GameObject ball;
+    public Text text;
+    Vector3 zero = new Vector3(0, 0, 0);
 
+    bool permission = true;
+    int boomBalls = 50;
     int counterOfBalls;
-    List<GameObject> Balls = new List<GameObject>();
-
-
-	// Use this for initialization
+    List<GameObject> balls;
+    
 	void Start () {
         PlayerPrefs.SetInt("Permission", 1);
         InvokeRepeating("SpawnBall", 0f, 0.25f);
@@ -19,31 +22,44 @@ public class BallController : MonoBehaviour {
     void FixedUpdate()
     {
         GameObject g = GameObject.FindGameObjectWithTag("Boom");
-        if (g != null && PlayerPrefs.GetInt("Permission") == 1)
+        if (g != null && permission)
         {
-            
+            balls = new List<GameObject>();
+            boomBalls = (int)g.GetComponent<Rigidbody>().mass;
             Transform tr = g.transform;
+
             Destroy(g);
-            
-            
-            for(int i = 0; i < 50; i++)
+
+            for(int i = 0; i < boomBalls; i++)
             {
                 GameObject oneOfFifty = Instantiate(ball, tr.position, Quaternion.identity);
-                oneOfFifty.GetComponent<Attractor>().enabled = false;
                 oneOfFifty.GetComponent<Collider>().enabled = false;
-                Balls.Add(oneOfFifty);
+
+                balls.Add(oneOfFifty);
+
                 Vector3 vector = new Vector3(Random.Range(-300,300), Random.Range(-300, 300), Random.Range(-300, 300));
                 oneOfFifty.GetComponent<Rigidbody>().AddForce(vector);
-                //ZWALNIANIE
+                
+                StartCoroutine(TurnOnCollisions(oneOfFifty));
             }
-            StartCoroutine(TurnOnCollisions(Balls));
+        }
+        foreach(var one in balls)
+        {
+            SlowDown(one);
         }
     }
 
-    // Update is called once per frame
     void Update () {
         CountBalls();
-	}
+    }
+
+    void SlowDown(GameObject ball)
+    {
+        if (ball.GetComponent<Rigidbody>().velocity != zero)
+        {
+            ball.GetComponent<Rigidbody>().velocity *= 0.95f;
+        }
+    }
 
     void SpawnBall()
     {
@@ -54,24 +70,18 @@ public class BallController : MonoBehaviour {
     void CountBalls()
     {
         counterOfBalls = GameObject.FindGameObjectsWithTag("Ball").Length;
-        Debug.Log(counterOfBalls);
+        text.text = "Balls "+counterOfBalls.ToString();
         if (counterOfBalls >= 250)
         {
+            permission = false;
             PlayerPrefs.SetInt("Permission", 0);
             CancelInvoke();
         }
     }
 
-    IEnumerator TurnOnCollisions(List<GameObject> balls)
+    IEnumerator TurnOnCollisions(GameObject ball)
     {
         yield return new WaitForSeconds(0.5f);
-
-        foreach(var ball in balls)
-        {
-            ball.GetComponent<Collider>().enabled = true;
-            ball.GetComponent<Attractor>().enabled = true;
-        
-        }
-        Balls.Clear();
+        ball.GetComponent<Collider>().enabled = true;
     }
 }
