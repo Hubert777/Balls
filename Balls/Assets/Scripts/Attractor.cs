@@ -55,10 +55,6 @@ public class Attractor : MonoBehaviour
             }
             rbToAttract.AddForce(force);
         }
-        else if (distance > rb.mass)
-        {
-            rbToAttract.velocity *= 0.9999999f;
-        }
     }
 
     private void OnCollisionEnter(Collision collision)
